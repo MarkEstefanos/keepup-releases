@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>keepup</title><meta name="description" content="keepup finds the messages and email you haven't answered.">
-<style>
+<link rel="icon" type="image/png" href="icon-64.png"><link rel="apple-touch-icon" href="icon-180.png"><style>
 :root { --bg: #faf8f5; --ink: #1f1b16; --muted: #6b635a; --line: #e6e0d8; --accent: #c2603a; --card: #ffffff; }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #1c1a18; --ink: #f1ece6; --muted: #a79e94; --line: #34302b; --accent: #e08a62; --card: #24211e; }
@@ -22,8 +22,11 @@ ul, ol { padding-left: 22px; }
 footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 15px; color: var(--muted); }
 nav { font-size: 15px; margin-bottom: 36px; }
 nav a { text-decoration: none; margin-right: 18px; }
+.mark { width: 72px; height: 72px; border-radius: 16px; display: block; margin: 0 0 20px;
+        box-shadow: 0 6px 18px rgba(122, 47, 22, 0.25); }
 </style></head><body><main>
 <nav><a href="./">keepup</a><a href="privacy.html">Privacy</a><a href="https://github.com/MarkEstefanos/keepup-releases/releases">Downloads</a></nav>
+<img class="mark" src="icon-144.png" alt="">
 <h1>keepup</h1>
 <p class="lede">The messages and email you haven't answered, in one list.</p>
 <p>keepup is a Mac app, with a companion iPhone app, that reads your iMessage, WhatsApp, Signal, Messenger, X,
