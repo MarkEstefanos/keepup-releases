@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>keepup</title><meta name="description" content="keepup finds the messages and email you haven't answered.">
+<style>
+:root { --bg: #faf8f5; --ink: #1f1b16; --muted: #6b635a; --line: #e6e0d8; --accent: #c2603a; --card: #ffffff; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1c1a18; --ink: #f1ece6; --muted: #a79e94; --line: #34302b; --accent: #e08a62; --card: #24211e; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 -apple-system, BlinkMacSystemFont,
+       "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+main { max-width: 680px; margin: 0 auto; padding: 56px 20px 72px; }
+h1, h2 { font-family: "New York", "Iowan Old Style", Georgia, serif; font-weight: 600; line-height: 1.2; }
+h1 { font-size: 44px; margin: 0 0 8px; letter-spacing: -0.5px; }
+h2 { font-size: 24px; margin: 40px 0 8px; }
+p, li { color: var(--ink); }
+.lede { font-size: 21px; color: var(--muted); margin: 0 0 28px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; margin: 24px 0; }
+a { color: var(--accent); }
+small, .muted { color: var(--muted); }
+ul, ol { padding-left: 22px; }
+footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 15px; color: var(--muted); }
+nav { font-size: 15px; margin-bottom: 36px; }
+nav a { text-decoration: none; margin-right: 18px; }
+</style></head><body><main>
+<nav><a href="./">keepup</a><a href="privacy.html">Privacy</a><a href="https://github.com/MarkEstefanos/keepup-releases/releases">Downloads</a></nav>
+<h1>keepup</h1>
+<p class="lede">The messages and email you haven't answered, in one list.</p>
+<p>keepup is a Mac app, with an iPhone app to come, that reads your iMessage, WhatsApp, Signal, Messenger, X,
+Telegram and Gmail and tells you, once or twice a day, who's waiting on you and what they need. It marks the
+machine mail you'd never read (receipts, alerts, newsletters) as read, so your inbox holds what matters. It never
+sends, deletes or answers anything: you reply in your own words, in your own apps.</p>
+<div class="card"><strong>Early beta, by invitation.</strong> keepup is being tested by a small group. Releases
+appear on <a href="https://github.com/MarkEstefanos/keepup-releases/releases">the downloads page</a>. To ask about joining, write to
+<a href="mailto:heykeepupapp@gmail.com">heykeepupapp@gmail.com</a>.</div>
+<h2>It runs on your Mac</h2>
+<p>keepup has no servers of its own and no accounts with its makers. Your messages stay on your Mac, except what
+it sends to the AI you use (Claude Code, under your own Anthropic account) to sort them. The
+<a href="privacy.html">privacy policy</a> says exactly what leaves your Mac and where it goes.</p>
+<h2>How keepup uses your Google data</h2>
+<p>With your permission, keepup reads your Gmail and Google Calendar to find emails waiting on a reply and to see
+when a meeting has already settled a thread, and it marks the emails it judges to be noise as read (never email a
+person wrote to you). It doesn't compose, send or delete email, and shares it with no one but the AI you
+use to sort it. keepup's use of information received
+from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google
+API Services User Data Policy</a>, including the Limited Use requirements. Details are in the
+<a href="privacy.html#google-user-data">privacy policy</a>.</p>
+<h2>What you need</h2>
+<ul><li>A Mac with Apple silicon, on macOS 15 or later</li>
+<li><a href="https://claude.com/claude-code">Claude Code</a>, signed in with your own account</li>
+<li>For email: a Gmail or Google Workspace account</li></ul>
+<h2>Chat networks</h2>
+<p>keepup reads WhatsApp, Signal, Messenger, X and Telegram through open-source bridges that run on your Mac and
+sign in as you, the way a second device would. They aren't official apps, and those networks' terms don't allow
+unofficial clients, so an account that uses one can be challenged, signed out, or (rarely) restricted. Each is
+optional, and keepup shows the risk before you connect it.</p>
+<footer>keepup · published by Mark Estefanos · <a href="mailto:heykeepupapp@gmail.com">heykeepupapp@gmail.com</a> ·
+<a href="privacy.html">Privacy policy</a></footer>
+</main></body></html>
