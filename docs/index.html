@@ -2,9 +2,11 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>keepup</title><meta name="description" content="keepup finds the messages and email you haven't answered.">
 <link rel="icon" type="image/png" href="icon-64.png"><link rel="apple-touch-icon" href="icon-180.png"><style>
-:root { --bg: #faf8f5; --ink: #1f1b16; --muted: #6b635a; --line: #e6e0d8; --accent: #c2603a; --card: #ffffff; }
+:root { --bg: #faf8f5; --ink: #1f1b16; --muted: #6b635a; --line: #e6e0d8; --accent: #c2603a; --card: #ffffff;
+        --on-accent: #ffffff; }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #1c1a18; --ink: #f1ece6; --muted: #a79e94; --line: #34302b; --accent: #e08a62; --card: #24211e; }
+  :root { --bg: #1c1a18; --ink: #f1ece6; --muted: #a79e94; --line: #34302b; --accent: #e08a62; --card: #24211e;
+          --on-accent: #1c1a18; }
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 -apple-system, BlinkMacSystemFont,
@@ -21,11 +23,20 @@ small, .muted { color: var(--muted); }
 ul, ol { padding-left: 22px; }
 footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 15px; color: var(--muted); }
 nav { font-size: 15px; margin-bottom: 36px; }
-nav a { text-decoration: none; margin-right: 18px; }
+nav a { text-decoration: none; margin-right: 18px; white-space: nowrap; display: inline-block; }
 .mark { width: 72px; height: 72px; border-radius: 16px; display: block; margin: 0 0 20px;
         box-shadow: 0 6px 18px rgba(122, 47, 22, 0.25); }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 28px 0 10px; }
+.button { display: inline-block; padding: 12px 20px; border-radius: 11px; font-weight: 600; text-decoration: none;
+          background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); }
+.button.secondary { background: transparent; color: var(--ink); border-color: var(--line); }
+.fine { font-size: 15px; color: var(--muted); margin: 0 0 8px; }
+.steps { list-style: none; padding: 0; margin: 16px 0; display: grid; gap: 12px; }
+.steps li { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; }
+.steps strong { display: block; margin-bottom: 2px; }
+code { font-size: 15px; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 1px 5px; }
 </style></head><body><main>
-<nav><a href="./">keepup</a><a href="privacy.html">Privacy</a><a href="https://github.com/MarkEstefanos/keepup-releases/releases">Downloads</a></nav>
+<nav><a href="./">keepup</a><a href="guide.html">Getting started</a><a href="privacy.html">Privacy</a><a href="https://github.com/MarkEstefanos/keepup-releases/releases">Releases</a></nav>
 <img class="mark" src="icon-144.png" alt="">
 <h1>keepup</h1>
 <p class="lede">The messages and email you haven't answered, in one list.</p>
@@ -33,13 +44,34 @@ nav a { text-decoration: none; margin-right: 18px; }
 Telegram and Gmail and tells you, once or twice a day, who's waiting on you and what they need. It marks the
 machine mail you'd never read (receipts, alerts, newsletters) as read, so your inbox holds what matters. It never
 sends, deletes or answers anything: you reply in your own words, in your own apps.</p>
-<div class="card"><strong>Early beta, by invitation.</strong> keepup is being tested by a small group. Releases
-appear on <a href="https://github.com/MarkEstefanos/keepup-releases/releases">the downloads page</a>. To ask about joining, write to
-<a href="mailto:heykeepupapp@gmail.com">heykeepupapp@gmail.com</a>.</div>
+<div class="actions"><a class="button" href="https://github.com/MarkEstefanos/keepup-releases/releases/latest/download/keepup-0.1.dmg">Download for Mac</a>
+<a class="button secondary" href="https://testflight.apple.com/join/7d3kTfmV">iPhone app on TestFlight</a></div>
+<p class="fine">Free public beta, version 0.1 · macOS 15 or later on Apple silicon ·
+<a href="guide.html">Getting started</a></p>
+<div class="card"><strong>An early beta.</strong> Expect rough edges, and please tell us about them: keepup →
+Settings → General → Send feedback, or <a href="mailto:heykeepupapp@gmail.com">heykeepupapp@gmail.com</a>. Google hasn't reviewed keepup yet,
+so its Gmail sign-in shows an "unverified app" warning; <a href="guide.html#signing-in-to-gmail">the guide</a>
+explains it.</div>
+<h2>How it works</h2>
+<ol class="steps">
+<li><strong>It reads, on your Mac</strong>Your messages and email, from the apps and accounts you choose. Nothing is
+copied to a server of ours: there isn't one.</li>
+<li><strong>Claude sorts them</strong>Claude Code, signed in with your own account, judges who's waiting on you and
+what's noise. It gets the messages to sort and nothing else.</li>
+<li><strong>It tells you</strong>A brief once or twice a day on your Mac and iPhone, reminders for whoever's still
+waiting, and the machine mail it marked read, with <em>Not noise</em> for anything it got wrong.</li>
+</ol>
+<h2>What you need</h2>
+<ul><li>A Mac with Apple silicon, on macOS 15 or later, that's usually awake</li>
+<li><a href="https://claude.com/claude-code">Claude Code</a> with your own Claude plan (keepup's Setup installs it
+and helps you sign in)</li>
+<li>For email: a Gmail or Google Workspace account</li>
+<li>For the iPhone app: iOS 18 or later, signed in to the same iCloud account as your Mac</li></ul>
 <h2>It runs on your Mac</h2>
 <p>keepup has no servers of its own and no accounts with its makers. Your messages stay on your Mac, except what
-it sends to the AI you use (Claude Code, under your own Anthropic account) to sort them. The
-<a href="privacy.html">privacy policy</a> says exactly what leaves your Mac and where it goes.</p>
+it sends to the AI you use (Claude Code, under your own Anthropic account) to sort them, and your list in your own
+iCloud for the iPhone app. The <a href="privacy.html">privacy policy</a> says exactly what leaves your Mac and
+where it goes.</p>
 <h2>How keepup uses your Google data</h2>
 <p>With your permission, keepup reads your Gmail and Google Calendar to find emails waiting on a reply and to see
 when a meeting has already settled a thread, and it marks the emails it judges to be noise as read (never email a
@@ -48,17 +80,12 @@ use to sort it. keepup's use of information received
 from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google
 API Services User Data Policy</a>, including the Limited Use requirements. Details are in the
 <a href="privacy.html#google-user-data">privacy policy</a>.</p>
-<h2>What you need</h2>
-<ul><li>A Mac with Apple silicon, on macOS 15 or later</li>
-<li><a href="https://claude.com/claude-code">Claude Code</a>, signed in with your own account</li>
-<li>For email: a Gmail or Google Workspace account</li>
-<li>For the iPhone app (in beta on TestFlight): iOS 18 or later, signed in to the same iCloud account as your
-Mac</li></ul>
 <h2>Chat networks</h2>
 <p>keepup reads WhatsApp, Signal, Messenger, X and Telegram through open-source bridges that run on your Mac and
 sign in as you, the way a second device would. They aren't official apps, and those networks' terms don't allow
 unofficial clients, so an account that uses one can be challenged, signed out, or (rarely) restricted. Each is
-optional, and keepup shows the risk before you connect it.</p>
+optional, and keepup shows the risk before you connect it. iMessage and texts need no bridge: keepup reads them
+from the Messages app.</p>
 <footer>keepup · published by Mark Estefanos · <a href="mailto:heykeepupapp@gmail.com">heykeepupapp@gmail.com</a> ·
 <a href="privacy.html">Privacy policy</a></footer>
 </main></body></html>

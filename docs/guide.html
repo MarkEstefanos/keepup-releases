@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting started with keepup</title><link rel="icon" type="image/png" href="icon-64.png"><link rel="apple-touch-icon" href="icon-180.png"><style>
+:root { --bg: #faf8f5; --ink: #1f1b16; --muted: #6b635a; --line: #e6e0d8; --accent: #c2603a; --card: #ffffff;
+        --on-accent: #ffffff; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1c1a18; --ink: #f1ece6; --muted: #a79e94; --line: #34302b; --accent: #e08a62; --card: #24211e;
+          --on-accent: #1c1a18; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 -apple-system, BlinkMacSystemFont,
+       "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+main { max-width: 680px; margin: 0 auto; padding: 56px 20px 72px; }
+h1, h2 { font-family: "New York", "Iowan Old Style", Georgia, serif; font-weight: 600; line-height: 1.2; }
+h1 { font-size: 44px; margin: 0 0 8px; letter-spacing: -0.5px; }
+h2 { font-size: 24px; margin: 40px 0 8px; }
+p, li { color: var(--ink); }
+.lede { font-size: 21px; color: var(--muted); margin: 0 0 28px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; margin: 24px 0; }
+a { color: var(--accent); }
+small, .muted { color: var(--muted); }
+ul, ol { padding-left: 22px; }
+footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 15px; color: var(--muted); }
+nav { font-size: 15px; margin-bottom: 36px; }
+nav a { text-decoration: none; margin-right: 18px; white-space: nowrap; display: inline-block; }
+.mark { width: 72px; height: 72px; border-radius: 16px; display: block; margin: 0 0 20px;
+        box-shadow: 0 6px 18px rgba(122, 47, 22, 0.25); }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 28px 0 10px; }
+.button { display: inline-block; padding: 12px 20px; border-radius: 11px; font-weight: 600; text-decoration: none;
+          background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); }
+.button.secondary { background: transparent; color: var(--ink); border-color: var(--line); }
+.fine { font-size: 15px; color: var(--muted); margin: 0 0 8px; }
+.steps { list-style: none; padding: 0; margin: 16px 0; display: grid; gap: 12px; }
+.steps li { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; }
+.steps strong { display: block; margin-bottom: 2px; }
+code { font-size: 15px; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 1px 5px; }
+</style></head><body><main>
+<nav><a href="./">keepup</a><a href="guide.html">Getting started</a><a href="privacy.html">Privacy</a><a href="https://github.com/MarkEstefanos/keepup-releases/releases">Releases</a></nav>
+<h1 id="keepup-beta-getting-started">keepup beta: getting started</h1>
+<p>Thanks for trying keepup. It finds the messages and email you haven't answered, across iMessage, WhatsApp, Signal, Messenger, X, Telegram and Gmail, and tells you once or twice a day who's waiting on you. It runs on your Mac; nothing you read or write in it goes to keepup's makers.</p>
+<p>This is an early beta: expect rough edges, and please tell us about them.</p>
+<h2 id="what-you-need">What you need</h2>
+<ul><li>A Mac with Apple silicon, on macOS 15 or later, that's usually awake (keepup does its work there)</li><li><a href="https://claude.com/claude-code">Claude Code</a> with your own Claude plan: keepup's judgement (who's waiting on you, what's noise) comes from it, and uses your plan's allowance. Setup helps you install it and sign in</li><li>For email: a Gmail or Google Workspace account</li><li>For the iPhone app: an iPhone on iOS 18 or later, signed in to the same iCloud account as your Mac</li></ul>
+<h2 id="install-on-your-mac">Install on your Mac</h2>
+<ol><li>Download keepup from <a href="https://markestefanos.github.io/keepup-releases/">the homepage</a> (or <code>keepup-&lt;version&gt;.dmg</code> from the <a href="https://github.com/MarkEstefanos/keepup-releases/releases/latest">releases page</a>).</li><li>Open it and drag keepup into Applications, then open keepup from Applications.</li><li>The Setup window walks you through the rest, in a few minutes:<ul><li>a few words about you, so keepup knows what matters to you;</li><li>Claude Code (Setup opens Terminal for you to sign in to it), and turning off "Help improve Claude" in your Claude privacy settings, so the messages keepup sorts aren't used to train models;</li><li>your email accounts;</li><li>the Mac permission it needs to read Messages and Contacts (Full Disk Access);</li><li>which chat networks you use;</li><li>when your daily briefs come.</li></ul></li></ol>
+<p>keepup lives in the menu bar and opens when you log in. Leave it running in the background: your iPhone gets its list from it. keepup keeps itself up to date (keepup → Check for Updates…).</p>
+<h2 id="signing-in-to-gmail">Signing in to Gmail</h2>
+<p>Google will show a warning that keepup "hasn't been verified". That's expected during the beta: keepup hasn't been through Google's review yet. Click <strong>Advanced</strong>, then <strong>Go to keepup</strong>.</p>
+<p>Google then describes keepup's permission as reading, composing and sending your email. That wording is Google's for the one permission that lets an app mark email as read. keepup never composes, sends or deletes anything: it only reads, and marks the machine mail it sweeps aside (receipts, alerts, newsletters) as read. It never marks email a person wrote to you as read.</p>
+<p>The sweep starts in preview: your brief says which machine mail it would mark read, and nothing is marked until you're happy with its choices and turn it on (keepup → Settings → Email sweep, per account). There you also choose which kinds it marks read: marketing, social notifications, receipts, shipping, money moving, statements, security alerts and more. Statements and security alerts are left unread unless you say otherwise. Whatever it marks read stays in your inbox, and "Marked read for you" in the app lists it, with <strong>Not noise</strong> for any it got wrong.</p>
+<h2 id="the-iphone-app">The iPhone app</h2>
+<p>Open <a href="https://testflight.apple.com/join/7d3kTfmV">keepup on TestFlight</a> on your iPhone: it has you install TestFlight from the App Store if you don't have it, then keepup. There's nothing to pair: the app finds your list in your iCloud, where the Mac app puts it, as long as the Mac app is running and both devices use the same iCloud account. Until then it shows how that works, and <strong>See an example</strong> shows the app with made-up people. When your list arrives, the app asks to send notifications: allow them, so the brief and reminders reach you. The keepup widget (Home Screen or Lock Screen) shows who's waiting at a glance, with Done and Snooze.</p>
+<h2 id="before-you-connect-chat-networks">Before you connect chat networks</h2>
+<p>keepup reads WhatsApp, Signal, Messenger, X and Telegram through bridges: open-source programs that run on your Mac and sign in as you, the way a second device or a browser would. They aren't official apps. The networks don't support them, and their terms don't allow unofficial clients, so an account that uses one can be challenged, signed out, or (rarely) restricted or banned. keepup shows each network's risk before you connect it, only reads, and never sends anything. Each one is optional.</p>
+<h2 id="privacy">Privacy</h2>
+<p>Your messages stay on your Mac, except what keepup sends to Claude to sort them (under your own account) and, for the iPhone app, your list in your own iCloud. The <a href="https://markestefanos.github.io/keepup-releases/privacy.html">privacy policy</a> says exactly what leaves your Mac.</p>
+<h2 id="feedback">Feedback</h2>
+<p>keepup → Settings → General → <strong>Send feedback</strong>. It attaches a report with no message text, which you can read before sending. Or write to <a href="mailto:heykeepupapp@gmail.com">heykeepupapp@gmail.com</a>. Screenshots of anything odd help a lot.</p>
+<h2 id="removing-keepup">Removing keepup</h2>
+<p>Settings → General → <strong>Remove keepup from this Mac</strong>: it unlinks the chat networks, revokes its Google access, stops everything and moves its files to the Trash.</p>
+<footer>keepup · published by Mark Estefanos · <a href="mailto:heykeepupapp@gmail.com">heykeepupapp@gmail.com</a></footer>
+</main></body></html>
