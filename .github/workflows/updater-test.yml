@@ -1,0 +1,24 @@
+# keepup's built-in updater, proven on Macs that have never run keepup. Started by scripts/updater-test.py in
+# keepup's own repo, which first publishes two test builds as the prerelease "updater-test" and removes it after.
+name: Updater test
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  update:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-26]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build A updates itself to build B
+        run: bash .github/updater-test/run.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: updater-test-${{ matrix.os }}
+          path: ${{ runner.temp }}/updater-test
+          retention-days: 3
