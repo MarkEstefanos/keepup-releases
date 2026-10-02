@@ -3,7 +3,8 @@
 # keepup's own repo starts this). Build A (keepup-test-A.zip in the "updater-test" prerelease) is installed fresh
 # for each case; the feed beside it (appcast.xml) offers build B. keepup stays running when it's asked to quit, so
 # the first three cases check that an update still gets through, and that keepup comes back afterwards; the fourth,
-# that the move to Applications at first launch (which must end the copy on the disk image) still works.
+# that the move to Applications at first launch (which must end the copy on the disk image) still works; the last
+# two click through Sparkle's own windows (asking first is its default), from build A and from the published 0.1.1.
 # It deletes /Applications/keepup.app and keepup's preferences: it refuses to run anywhere but on a runner.
 set -uo pipefail
 
@@ -86,6 +87,26 @@ running_from_applications() {
     [ "$pid" != 0 ] && ps -o command= -p "$pid" | grep -q "^$APP/"
 }
 
+click_button() {  # click a button with this name in any of keepup's windows (Sparkle's are nested in groups)
+    osascript - "$1" > /dev/null 2>&1 << 'END'
+on run argv
+    tell application "System Events" to tell process "keepup"
+        repeat with w in windows
+            repeat with e in (entire contents of w)
+                try
+                    if role of e is "AXButton" and name of e is (item 1 of argv) then
+                        click e
+                        return
+                    end if
+                end try
+            end repeat
+        end repeat
+    end tell
+    error "no such button"
+end run
+END
+}
+
 check() {  # check "what" condition...
     local what=$1
     shift
@@ -105,18 +126,24 @@ wait_for() {  # wait_for seconds "what" condition...
     pass "$what"
 }
 
-fresh() {  # build A as on a Mac that has never run keepup, opened. $1: seconds until its next update check (0: at launch)
+fresh() {  # build A as on a Mac that has never run keepup, opened. $1: seconds until its next update check (0: at
+    # launch); $2: "ask" for Sparkle's own default, asking before it installs ("install updates automatically" is
+    # on otherwise); $3: another build's zip, which is told to read the test feed
     pkill -x keepup
     pkill -x Autoupdate
     pkill -x Updater
     sleep 2
     rm -rf "$APP" "$HOME/Library/Saved Application State/$ID.savedState" "$HOME/Library/Caches/$ID"
     defaults delete "$ID" > /dev/null 2>&1
-    ditto -x -k "$WORK/keepup-test-A.zip" /Applications
-    # "install updates automatically" on, and the last check an hour ago less $1 seconds (an hour is the shortest
-    # time Sparkle leaves between checks)
+    ditto -x -k "${3:-$WORK/keepup-test-A.zip}" /Applications
+    if [ -n "${3:-}" ]; then defaults write "$ID" SUFeedURL "$FEED/appcast.xml"; fi
+    # the last check an hour ago less $1 seconds (an hour is the shortest time Sparkle leaves between checks)
     defaults write "$ID" SUEnableAutomaticChecks -bool YES
-    defaults write "$ID" SUAutomaticallyUpdate -bool YES
+    if [ "${2:-}" = ask ]; then
+        defaults write "$ID" SUAutomaticallyUpdate -bool NO
+    else
+        defaults write "$ID" SUAutomaticallyUpdate -bool YES
+    fi
     defaults write "$ID" SUHasLaunchedBefore -bool YES
     defaults write "$ID" SUScheduledCheckInterval -int 3600
     defaults write "$ID" SULastCheckTime -date "$(date -u -v-3600S -v+"$1"S '+%Y-%m-%d %H:%M:%S +0000')"
@@ -221,6 +248,42 @@ if wait_for 60 "keepup opens from the disk image" running; then
 fi
 pkill -x keepup
 hdiutil detach -quiet /Volumes/keepup
+
+say "5. Asked first (Sparkle's default): Install Update, then Install and Relaunch"
+fresh 0 ask
+if wait_for 60 "keepup opens with a window, in the Dock" in_dock; then
+    first="$(field pid)"
+    if wait_for 120 "Sparkle offers build $NEW; Install Update" click_button "Install Update"; then
+        shot 5-offered
+        if wait_for 180 "it downloads; Install and Relaunch" click_button "Install and Relaunch"; then
+            wait_for 180 "build $NEW installed and keepup opened again" updated_from "$first"
+        fi
+    fi
+    shot 5-updated
+fi
+
+say "6. What testers have: the published keepup 0.1.1 updates itself to this build"
+if curl -fsSL -o "$WORK/keepup-0.1.1.zip" "https://github.com/$GITHUB_REPOSITORY/releases/download/v0.1.1/keepup-0.1.1.zip"; then
+    fresh 0 ask "$WORK/keepup-0.1.1.zip"
+    check "0.1.1 is installed" [ "$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")" = 0.1.1 ]
+    if wait_for 60 "keepup 0.1.1 is running" running; then
+        first="$(field pid)"
+        if wait_for 120 "Sparkle offers build $NEW; Install Update" click_button "Install Update"; then
+            shot 6-offered
+            if wait_for 180 "it downloads; Install and Relaunch" click_button "Install and Relaunch"; then
+                if wait_for 180 "build $NEW installed and keepup opened again" updated_from "$first"; then
+                    if wait_for 60 "it opens with a window, in the Dock" in_dock; then
+                        sleep 8
+                        check "and now a quit leaves it in the menu bar" quit_stays
+                    fi
+                fi
+            fi
+        fi
+        shot 6-updated
+    fi
+else
+    fail "couldn't download keepup 0.1.1"
+fi
 
 say "What keepup and its updater logged"
 sudo log show --start "$BEGAN" --style compact --predicate \
