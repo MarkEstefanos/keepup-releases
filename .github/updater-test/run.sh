@@ -4,7 +4,8 @@
 # for each case; the feed beside it (appcast.xml) offers build B. keepup stays running when it's asked to quit, so
 # the first three cases check that an update still gets through, and that keepup comes back afterwards; the fourth,
 # that the move to Applications at first launch (which must end the copy on the disk image) still works; the last
-# two click through Sparkle's own windows (asking first is its default), from build A and from the published 0.1.1.
+# three click through Sparkle's own windows when asked first, from build A, from the published 0.1.1, and from
+# keepup's menu, where an update found while keepup sits in the menu bar waits.
 # It deletes /Applications/keepup.app and keepup's preferences: it refuses to run anywhere but on a runner.
 set -uo pipefail
 
@@ -87,11 +88,13 @@ running_from_applications() {
     [ "$pid" != 0 ] && ps -o command= -p "$pid" | grep -q "^$APP/"
 }
 
-click_button() {  # click a button with this name in any of keepup's windows (Sparkle's are nested in groups)
+click_button() {  # click a button with this name in Sparkle's window. (Searching every window timed out: the
+    # SwiftUI windows hold thousands of elements; in 0.1.1 Sparkle's window opens behind Setup.)
     osascript - "$1" > /dev/null 2>&1 << 'END'
 on run argv
     tell application "System Events" to tell process "keepup"
-        repeat with w in windows
+        repeat with w in (windows whose name is "Software Update" or name is "Updating keepup")
+            perform action "AXRaise" of w
             repeat with e in (entire contents of w)
                 try
                     if role of e is "AXButton" and name of e is (item 1 of argv) then
@@ -103,6 +106,28 @@ on run argv
         end repeat
     end tell
     error "no such button"
+end run
+END
+}
+
+menu_item() {  # choose the item of keepup's menu in the menu bar whose name starts with $1
+    osascript - "$1" > /dev/null 2>&1 << 'END'
+on run argv
+    tell application "System Events" to tell process "keepup"
+        repeat with i from (count of menu bars) to 1 by -1
+            repeat with m in (menu bar items of menu bar i)
+                try
+                    click m
+                    delay 1
+                    click (first menu item of menu 1 of m whose name starts with (item 1 of argv))
+                    return
+                on error
+                    key code 53 -- Escape: close whatever opened
+                end try
+            end repeat
+        end repeat
+    end tell
+    error "no such menu item"
 end run
 END
 }
@@ -283,6 +308,30 @@ if curl -fsSL -o "$WORK/keepup-0.1.1.zip" "https://github.com/$GITHUB_REPOSITORY
     fi
 else
     fail "couldn't download keepup 0.1.1"
+fi
+
+say "7. Asked first, with keepup in the menu bar: the update waits in keepup's menu, not in a window behind other apps"
+fresh 50 ask
+if wait_for 60 "keepup opens with a window, in the Dock" in_dock; then
+    first="$(field pid)"
+    sleep 8  # Setup opens too
+    "$WORK/probe" quit
+    wait_for 20 "a quit leaves it in the menu bar" same_in_menu_bar "$first"
+    if wait_for 180 "the daily check found build $NEW, and keepup's menu offers it" logged "is offered in the menu"; then
+        sleep 3
+        check "no window opened for it" same_in_menu_bar "$first"
+        if menu_item "Update to keepup"; then
+            if wait_for 60 "choosing it brings Sparkle's window to the front; Install Update" click_button "Install Update"; then
+                shot 7-offered
+                if wait_for 180 "it downloads; Install and Relaunch" click_button "Install and Relaunch"; then
+                    wait_for 180 "build $NEW installed and keepup opened again" updated_from "$first"
+                fi
+            fi
+        else
+            fail "couldn't choose Update to keepup… in keepup's menu"
+        fi
+    fi
+    shot 7-updated
 fi
 
 say "What keepup and its updater logged"
