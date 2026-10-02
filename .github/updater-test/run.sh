@@ -2,7 +2,8 @@
 # keepup's built-in updater, proven on a Mac that has never run keepup: one of GitHub's (scripts/updater-test.py in
 # keepup's own repo starts this). Build A (keepup-test-A.zip in the "updater-test" prerelease) is installed fresh
 # for each case; the feed beside it (appcast.xml) offers build B. keepup stays running when it's asked to quit, so
-# each case checks that an update still gets through, and that keepup comes back afterwards.
+# the first three cases check that an update still gets through, and that keepup comes back afterwards; the fourth,
+# that the move to Applications at first launch (which must end the copy on the disk image) still works.
 # It deletes /Applications/keepup.app and keepup's preferences: it refuses to run anywhere but on a runner.
 set -uo pipefail
 
@@ -36,10 +37,18 @@ field() { state | tr ' ' '\n' | sed -n "s/^$1=//p"; }
 build() { /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP/Contents/Info.plist" 2>/dev/null || echo none; }
 
 # what must be true
+running() { [ "$(field pid)" != 0 ]; }
 in_dock() { [ "$(field policy)" = regular ] && [ "$(field windows)" -ge 1 ]; }
 menu_bar_only() { [ "$(state | cut -d' ' -f2-)" = "policy=accessory windows=0" ]; }
 same_in_menu_bar() { [ "$(state)" = "pid=$1 policy=accessory windows=0" ]; }
 waiting_with_window() { [ "$(build)" = "$OLD" ] && [ "$(field pid)" = "$1" ] && [ "$(field windows)" -ge 1 ]; }
+quit_stays() {  # a quit, then the same keepup is still there with no window
+    local pid
+    pid="$(field pid)"
+    "$WORK/probe" quit
+    sleep 4
+    same_in_menu_bar "$pid"
+}
 updated_from() { [ "$(build)" = "$NEW" ] && [ "$(field pid)" != 0 ] && [ "$(field pid)" != "$1" ]; }
 logged() {  # keepup's own account of the update, since this case began (ios/CommsMac/Updates.swift)
     sudo log show --start "$STARTED" --predicate "subsystem == \"$ID\"" --style compact 2>/dev/null | grep -q "$1"
@@ -55,6 +64,26 @@ tell application "System Events" to tell process "keepup"
     end repeat
 end tell
 END
+}
+
+answer_question() {  # press the default button of the question keepup is asking, e.g. "Copy to Applications and Open"
+    osascript > /dev/null 2>&1 << END
+tell application "System Events" to tell process "keepup"
+    set frontmost to true
+    repeat with w in windows
+        if exists (button "$1" of w) then
+            click button "$1" of w
+            return
+        end if
+    end repeat
+    key code 36 -- Return: the default button, where the question's buttons aren't the window's own
+end tell
+END
+}
+running_from_applications() {
+    local pid
+    pid="$(field pid)"
+    [ "$pid" != 0 ] && ps -o command= -p "$pid" | grep -q "^$APP/"
 }
 
 check() {  # check "what" condition...
@@ -121,7 +150,7 @@ if wait_for 60 "keepup opens with a window, in the Dock" in_dock; then
     check "a second quit, from the menu bar, leaves it running too" same_in_menu_bar "$first"
     check "it's still build $OLD" [ "$(build)" = "$OLD" ]
     if wait_for 300 "build $NEW installed itself and keepup is running again" updated_from "$first"; then
-        sleep 8
+        sleep 20  # Setup, when it opens itself, comes a few seconds after launch
         check "it came back in the menu bar only, with no window" menu_bar_only
         check "keepup's log says it installed from the menu bar" logged "installing from the menu bar"
         second="$(field pid)"
@@ -141,7 +170,7 @@ if wait_for 60 "keepup opens with a window, in the Dock" in_dock; then
         check "it waits while the window is open: build $OLD, the same keepup, its window" waiting_with_window "$first"
         "$WORK/probe" quit
         if wait_for 300 "the quit closed the window, build $NEW installed and keepup is running again" updated_from "$first"; then
-            sleep 8
+            sleep 20
             check "it came back in the menu bar only, with no window" menu_bar_only
         fi
     fi
@@ -158,12 +187,40 @@ if wait_for 60 "keepup opens with a window, in the Dock" in_dock; then
         if waiting_with_window "$first"; then
             echo "   skipped: this runner doesn't let a script click the window's close button"
         elif wait_for 300 "closing the window installed build $NEW, and keepup is running again" updated_from "$first"; then
-            sleep 8
+            sleep 20
             check "it came back in the menu bar only, with no window" menu_bar_only
         fi
     fi
     shot 3-updated
 fi
+
+say "4. Opened from its disk image, keepup copies itself to Applications and opens from there"
+pkill -x keepup
+sleep 2
+rm -rf "$APP" "$HOME/Library/Saved Application State/$ID.savedState"
+defaults delete "$ID" > /dev/null 2>&1
+defaults write "$ID" SUEnableAutomaticChecks -bool NO  # no update in this one
+mkdir "$WORK/image"
+ditto "$WORK/A/keepup.app" "$WORK/image/keepup.app"
+hdiutil create -quiet -volname keepup -srcfolder "$WORK/image" -fs HFS+ -format UDZO "$WORK/keepup.dmg"
+hdiutil attach -quiet -nobrowse "$WORK/keepup.dmg"
+open /Volumes/keepup/keepup.app
+if wait_for 60 "keepup opens from the disk image" running; then
+    image="$(field pid)"
+    sleep 6  # its question comes up
+    shot 4-question
+    answer_question "Copy to Applications and Open"
+    if wait_for 60 "it copied itself to Applications and is running from there" running_from_applications; then
+        check "the copy on the disk image has quit" [ "$(field pid)" != "$image" ]
+        if wait_for 60 "it opens with a window, in the Dock" in_dock; then
+            sleep 8  # Setup opens too
+            check "a quit leaves it in the menu bar" quit_stays
+        fi
+    fi
+    shot 4-moved
+fi
+pkill -x keepup
+hdiutil detach -quiet /Volumes/keepup
 
 say "What keepup and its updater logged"
 sudo log show --start "$BEGAN" --style compact --predicate \
