@@ -89,35 +89,43 @@ running_from_applications() {
     [ "$pid" != 0 ] && ps -o command= -p "$pid" | grep -q "^$APP/"
 }
 
-click_button() {  # click a button with this name in Sparkle's window. Its own windows are skipped: searching a
-    # SwiftUI window's thousands of elements timed out. On failure, what was seen goes to $OUT/ax.txt.
-    osascript - "$1" > "$OUT/ax.txt" 2>&1 << 'END'
-on run argv
-    set wanted to item 1 of argv
-    set seen to ""
-    tell application "System Events" to tell process "keepup"
-        repeat with w in windows
-            set n to ""
-            try
-                set n to (name of w) as text
-            end try
-            set seen to seen & "[" & n & "] "
-            if n is not in {"keepup", "Set up keepup", "Mail marked read", "Setup"} then
-                with timeout of 60 seconds
-                    repeat with e in (entire contents of w)
-                        try
-                            if role of e is "AXButton" and (name of e as text) is wanted then
-                                click e
-                                return "clicked " & wanted & " in [" & n & "]"
-                            end if
-                        end try
-                    end repeat
-                end timeout
-            end if
-        end repeat
-    end tell
-    error "no button " & wanted & "; windows: " & seen
-end run
+# Sparkle's windows. The buttons it needs here are each window's default one (Install Update, then Install and
+# Relaunch), so the test presses Return in Sparkle's window: System Events didn't list the buttons by name.
+sparkle_window() {
+    osascript -e 'tell application "System Events" to tell process "keepup" to exists (first window whose name is "Software Update" or name is "Updating keepup")' 2> /dev/null | grep -q true
+}
+sparkle_in_front() {  # keepup is the frontmost app, and Sparkle's window is its frontmost window
+    osascript -e 'tell application "System Events" to tell process "keepup" to return (frontmost as text) & " " & (name of window 1)' 2> /dev/null | grep -q "^true Software Update$"
+}
+press_default() {  # Return in Sparkle's window, brought to the front
+    osascript > /dev/null 2>&1 << 'END'
+tell application "System Events" to tell process "keepup"
+    set w to first window whose name is "Software Update" or name is "Updating keepup"
+    set frontmost to true
+    perform action "AXRaise" of w
+    delay 0.5
+    key code 36
+end tell
+END
+}
+installs_through_sparkle() {  # press Sparkle's default button whenever its window is up, until $1 has become build B
+    updated_from "$1" && return 0
+    sparkle_window && press_default
+    return 1
+}
+sparkle_ax() {  # what System Events sees in Sparkle's window, kept with the run
+    osascript > "$OUT/$1" 2>&1 << 'END'
+tell application "System Events" to tell process "keepup"
+    set out to ""
+    repeat with e in (entire contents of (first window whose name is "Software Update"))
+        try
+            set out to out & (role of e) & " | " & (name of e as text) & " | " & (description of e as text) & linefeed
+        on error
+            set out to out & "?" & linefeed
+        end try
+    end repeat
+    return out
+end tell
 END
 }
 
@@ -290,11 +298,11 @@ say "5. Asked first (Sparkle's default): Install Update, then Install and Relaun
 fresh 0 ask
 if wait_for 60 "keepup opens with a window, in the Dock" in_dock; then
     first="$(field pid)"
-    if wait_for 120 "Sparkle offers build $NEW; Install Update" click_button "Install Update"; then
+    if wait_for 120 "Sparkle offers build $NEW" sparkle_window; then
         shot 5-offered
-        if wait_for 180 "it downloads; Install and Relaunch" click_button "Install and Relaunch"; then
-            wait_for 180 "build $NEW installed and keepup opened again" updated_from "$first"
-        fi
+        sparkle_ax 5-sparkle-ax.txt
+        wait_for 240 "Install Update, then Install and Relaunch: build $NEW installed and keepup opened again" \
+            installs_through_sparkle "$first"
     fi
     shot 5-updated
 fi
@@ -305,14 +313,13 @@ if curl -fsSL -o "$WORK/keepup-0.1.1.zip" "https://github.com/$GITHUB_REPOSITORY
     check "0.1.1 is installed" [ "$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")" = 0.1.1 ]
     if wait_for 60 "keepup 0.1.1 is running" running; then
         first="$(field pid)"
-        if wait_for 120 "Sparkle offers build $NEW; Install Update" click_button "Install Update"; then
+        if wait_for 120 "Sparkle offers build $NEW" sparkle_window; then
             shot 6-offered
-            if wait_for 180 "it downloads; Install and Relaunch" click_button "Install and Relaunch"; then
-                if wait_for 180 "build $NEW installed and keepup opened again" updated_from "$first"; then
-                    if wait_for 60 "it opens with a window, in the Dock" in_dock; then
-                        sleep 8
-                        check "and now a quit leaves it in the menu bar" quit_stays
-                    fi
+            if wait_for 240 "Install Update, then Install and Relaunch: build $NEW installed and keepup opened again" \
+                installs_through_sparkle "$first"; then
+                if wait_for 60 "it opens with a window, in the Dock" in_dock; then
+                    sleep 8
+                    check "and now a quit leaves it in the menu bar" quit_stays
                 fi
             fi
         fi
@@ -333,11 +340,10 @@ if wait_for 60 "keepup opens with a window, in the Dock" in_dock; then
         sleep 3
         check "no window opened for it" same_in_menu_bar "$first"
         if menu_item "Update to keepup"; then
-            if wait_for 60 "choosing it brings Sparkle's window to the front; Install Update" click_button "Install Update"; then
+            if wait_for 60 "choosing it brings Sparkle's window to the front" sparkle_in_front; then
                 shot 7-offered
-                if wait_for 180 "it downloads; Install and Relaunch" click_button "Install and Relaunch"; then
-                    wait_for 180 "build $NEW installed and keepup opened again" updated_from "$first"
-                fi
+                wait_for 240 "Install Update, then Install and Relaunch: build $NEW installed and keepup opened again" \
+                    installs_through_sparkle "$first"
             fi
         else
             fail "couldn't choose Update to keepup… in keepup's menu"
