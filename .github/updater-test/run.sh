@@ -30,6 +30,7 @@ pass() { printf '   ok: %s\n' "$*"; }
 shot() { screencapture -x "$OUT/$1.png" 2>/dev/null || true; }
 fail() {
     printf '   FAILED: %s\n   now: %s, build %s\n' "$*" "$(state)" "$(build)"
+    if [ -s "$OUT/ax.txt" ]; then sed 's/^/   seen: /' "$OUT/ax.txt"; fi
     failures=$((failures + 1))
     shot "failed-$failures"
 }
@@ -88,24 +89,34 @@ running_from_applications() {
     [ "$pid" != 0 ] && ps -o command= -p "$pid" | grep -q "^$APP/"
 }
 
-click_button() {  # click a button with this name in Sparkle's window. (Searching every window timed out: the
-    # SwiftUI windows hold thousands of elements; in 0.1.1 Sparkle's window opens behind Setup.)
-    osascript - "$1" > /dev/null 2>&1 << 'END'
+click_button() {  # click a button with this name in Sparkle's window. Its own windows are skipped: searching a
+    # SwiftUI window's thousands of elements timed out. On failure, what was seen goes to $OUT/ax.txt.
+    osascript - "$1" > "$OUT/ax.txt" 2>&1 << 'END'
 on run argv
+    set wanted to item 1 of argv
+    set seen to ""
     tell application "System Events" to tell process "keepup"
-        repeat with w in (windows whose name is "Software Update" or name is "Updating keepup")
-            perform action "AXRaise" of w
-            repeat with e in (entire contents of w)
-                try
-                    if role of e is "AXButton" and name of e is (item 1 of argv) then
-                        click e
-                        return
-                    end if
-                end try
-            end repeat
+        repeat with w in windows
+            set n to ""
+            try
+                set n to (name of w) as text
+            end try
+            set seen to seen & "[" & n & "] "
+            if n is not in {"keepup", "Set up keepup", "Mail marked read", "Setup"} then
+                with timeout of 60 seconds
+                    repeat with e in (entire contents of w)
+                        try
+                            if role of e is "AXButton" and (name of e as text) is wanted then
+                                click e
+                                return "clicked " & wanted & " in [" & n & "]"
+                            end if
+                        end try
+                    end repeat
+                end timeout
+            end if
         end repeat
     end tell
-    error "no such button"
+    error "no button " & wanted & "; windows: " & seen
 end run
 END
 }
@@ -173,6 +184,7 @@ fresh() {  # build A as on a Mac that has never run keepup, opened. $1: seconds 
     defaults write "$ID" SUScheduledCheckInterval -int 3600
     defaults write "$ID" SULastCheckTime -date "$(date -u -v-3600S -v+"$1"S '+%Y-%m-%d %H:%M:%S +0000')"
     STARTED="$(date '+%Y-%m-%d %H:%M:%S')"
+    rm -f "$OUT/ax.txt"
     open "$APP"
 }
 
