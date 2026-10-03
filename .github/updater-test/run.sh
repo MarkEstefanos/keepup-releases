@@ -199,8 +199,8 @@ fresh() {  # build A as on a Mac that has never run keepup, opened. $1: seconds 
 
 say "Setting up on $(sw_vers -productName) $(sw_vers -productVersion) ($(uname -m))"
 swiftc -O "$HERE/probe.swift" -o "$WORK/probe" || exit 1
-curl -fsSL -o "$WORK/keepup-test-A.zip" "$FEED/keepup-test-A.zip" || exit 1
-curl -fsSL -o "$WORK/appcast.xml" "$FEED/appcast.xml" || exit 1
+curl -fsSL --retry 5 --retry-all-errors -o "$WORK/keepup-test-A.zip" "$FEED/keepup-test-A.zip" || exit 1
+curl -fsSL --retry 5 --retry-all-errors -o "$WORK/appcast.xml" "$FEED/appcast.xml" || exit 1
 ditto -x -k "$WORK/keepup-test-A.zip" "$WORK/A"
 OLD="$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$WORK/A/keepup.app/Contents/Info.plist")"
 NEW="$(sed -n 's/.*<sparkle:version>\([0-9]*\)<.*/\1/p' "$WORK/appcast.xml" | sort -n | tail -1)"
@@ -309,7 +309,7 @@ if wait_for 60 "keepup opens with a window, in the Dock" in_dock; then
 fi
 
 say "6. What testers have: the published keepup 0.1.1 updates itself to this build"
-if curl -fsSL -o "$WORK/keepup-0.1.1.zip" "https://github.com/$GITHUB_REPOSITORY/releases/download/v0.1.1/keepup-0.1.1.zip"; then
+if curl -fsSL --retry 5 --retry-all-errors -o "$WORK/keepup-0.1.1.zip" "https://github.com/$GITHUB_REPOSITORY/releases/download/v0.1.1/keepup-0.1.1.zip"; then
     fresh 0 ask "$WORK/keepup-0.1.1.zip"
     check "0.1.1 is installed" [ "$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")" = 0.1.1 ]
     if wait_for 60 "keepup 0.1.1 is running" running; then
@@ -358,7 +358,7 @@ sudo log show --start "$BEGAN" --style compact --predicate \
     "subsystem == \"$ID\" || subsystem == \"org.sparkle-project.Sparkle\" || process == \"Autoupdate\" || process == \"Updater\"" \
     > "$OUT/log.txt" 2>&1
 grep -c . "$OUT/log.txt" | sed 's/^/   lines kept with the run: /'
-grep "$ID" "$OUT/log.txt" | grep "update:" | sed 's/^/   /'
+grep "$ID" "$OUT/log.txt" | grep -E "update:|quit:" | sed 's/^/   /'
 if [ "$failures" -gt 0 ]; then
     tail -150 "$OUT/log.txt"
     say "$failures failed"
