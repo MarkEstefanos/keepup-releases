@@ -1,6 +1,7 @@
 // What keepup is doing, seen from outside, for run.sh:
 //   probe state    "pid=N policy=regular|accessory windows=N" (pid=0 when it isn't running)
 //   probe quit     asks keepup to quit the way the Dock's Quit does (a quit event, which Presence turns down)
+//   probe active   "true" when keepup is the active app (in front)
 
 import AppKit
 
@@ -9,6 +10,8 @@ let apps = NSRunningApplication.runningApplications(withBundleIdentifier: "com.m
 switch CommandLine.arguments.dropFirst().first {
 case "quit":
     for app in apps { print("   quit sent to \(app.processIdentifier): \(app.terminate())") }
+case "active":
+    print(apps.contains { $0.isActive })
 default:
     guard let app = apps.first else {
         print("pid=0 policy=none windows=0")

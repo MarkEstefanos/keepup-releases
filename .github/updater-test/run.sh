@@ -90,12 +90,13 @@ running_from_applications() {
 }
 
 # Sparkle's windows. The buttons it needs here are each window's default one (Install Update, then Install and
-# Relaunch), so the test presses Return in Sparkle's window: System Events didn't list the buttons by name.
+# Relaunch), so the test presses Return in Sparkle's window: System Events can name the window but can't read
+# anything inside it (every element errors; see N-sparkle-ax.txt with a run).
 sparkle_window() {
     osascript -e 'tell application "System Events" to tell process "keepup" to exists (first window whose name is "Software Update" or name is "Updating keepup")' 2> /dev/null | grep -q true
 }
-sparkle_in_front() {  # keepup is the frontmost app, and Sparkle's window is its frontmost window
-    osascript -e 'tell application "System Events" to tell process "keepup" to return (frontmost as text) & " " & (name of window 1)' 2> /dev/null | grep -q "^true Software Update$"
+sparkle_in_front() {  # Sparkle's window is up and keepup is the active app (in case 7 it's keepup's only window)
+    sparkle_window && [ "$("$WORK/probe" active)" = true ]
 }
 press_default() {  # Return in Sparkle's window, brought to the front
     osascript > /dev/null 2>&1 << 'END'
